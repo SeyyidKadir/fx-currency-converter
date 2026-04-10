@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FX · Currency Converter</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d14;--surface:#16161f;--surface2:#1e1e2a;--surface3:#252535;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#eeeef5;--muted:#6868a0;--muted2:#9898c0;
+  --teal:#5ecfb0;--teal2:#3db898;--teal-glow:rgba(94,207,176,0.15);
+  --gold:#e8c97a;--gold2:#f5e0a0;
+  --rose:#e87a9a;--rose-bg:rgba(232,122,154,0.07);--rose-border:rgba(232,122,154,0.2);
+  --green-bg:rgba(94,207,176,0.07);--green-border:rgba(94,207,176,0.18);
+  --syne:'Syne',sans-serif;--dm:'DM Sans',sans-serif;
+  --fs:1rem;--radius:14px;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);font-family:var(--dm);color:var(--text);
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;padding:1rem 1rem 3rem;
+  font-size:var(--fs);
+}
+
+/* ── FONT SIZE ── */
+body.fs-md{--fs:1.1rem}
+body.fs-lg{--fs:1.22rem}
+
+/* ── TOP BAR ── */
+.topbar{
+  width:100%;max-width:520px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.6rem 0;margin-bottom:0.75rem;gap:0.5rem;
+}
+.topbar-left{display:flex;align-items:center;gap:0.4rem}
+.fs-controls{display:flex;gap:0.3rem}
+.fs-btn{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:0.3rem 0.55rem;
+  font-family:var(--dm);font-weight:500;color:var(--muted2);
+  cursor:pointer;transition:all 0.15s;line-height:1;
+}
+.fs-btn:hover{border-color:var(--border2);color:var(--text)}
+.fs-btn.active{background:var(--surface3);border-color:var(--teal);color:var(--teal)}
+.fs-label{font-size:0.65rem;color:var(--muted);font-family:var(--syne);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap}
+
+/* ── LANG BAR ── */
+.lang-scroll{
+  width:100%;max-width:520px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  margin-bottom:1rem;
+  scrollbar-width:none;
+}
+.lang-scroll::-webkit-scrollbar{display:none}
+.lang-bar{display:flex;gap:0.35rem;padding-bottom:2px;width:max-content}
+.lang-btn{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:100px;padding:0.28rem 0.7rem;
+  font-family:var(--dm);font-size:0.7rem;color:var(--muted2);
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;letter-spacing:0.02em;
+  flex-shrink:0;
+}
+.lang-btn:hover{border-color:var(--border2);color:var(--text)}
+.lang-btn.active{background:linear-gradient(135deg,var(--teal2),#2a9a80);border-color:transparent;color:#fff;font-weight:500}
+
+/* ── CARD ── */
+.card{
+  width:100%;max-width:520px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 24px 60px rgba(0,0,0,0.45);
+  animation:fadeUp 0.5s ease both;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* Header */
+.card-header{
+  padding:1.4rem 1.5rem 1.2rem;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(94,207,176,0.04) 0%,transparent 100%);
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+}
+.brand{display:flex;align-items:center;gap:0.6rem}
+.brand-icon{
+  width:34px;height:34px;min-width:34px;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:0.95rem;box-shadow:0 4px 12px rgba(94,207,176,0.25);
+}
+.brand-text h1{font-family:var(--syne);font-size:1em;font-weight:700;color:var(--text);line-height:1.1}
+.brand-text span{font-size:0.7em;color:var(--muted);letter-spacing:0.04em}
+.live-badge{
+  display:flex;align-items:center;gap:0.3rem;flex-shrink:0;
+  background:rgba(94,207,176,0.08);border:1px solid rgba(94,207,176,0.2);
+  border-radius:100px;padding:0.28rem 0.65rem;
+  font-size:0.65em;color:var(--teal);font-family:var(--dm);font-weight:500;letter-spacing:0.04em;
+}
+.live-dot{width:5px;height:5px;background:var(--teal);border-radius:50%;animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* Body */
+.card-body{padding:1.4rem 1.5rem}
+
+/* API selector */
+.api-section{margin-bottom:1.2rem}
+.section-label{
+  font-size:0.65em;font-family:var(--syne);text-transform:uppercase;
+  letter-spacing:0.1em;color:var(--muted);margin-bottom:0.5rem;display:block;
+}
+.api-tabs{display:flex;gap:0.4rem;flex-wrap:wrap}
+.api-tab{
+  flex:1;min-width:0;
+  padding:0.55rem 0.4rem;text-align:center;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;font-family:var(--dm);font-size:0.75em;
+  font-weight:500;color:var(--muted2);cursor:pointer;transition:all 0.15s;
+}
+.api-tab:hover{border-color:var(--border2);color:var(--text)}
+.api-tab.active{background:var(--teal-glow);border-color:var(--teal);color:var(--teal)}
+
+/* Amount */
+.field{margin-bottom:1rem}
+.input-row{position:relative}
+.amount-input{
+  width:100%;padding:0.85rem 1rem;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);font-family:var(--syne);
+  font-size:1.35em;font-weight:700;color:var(--text);
+  outline:none;transition:border-color 0.15s;appearance:none;
+}
+.amount-input:focus{border-color:rgba(94,207,176,0.4)}
+.amount-input::placeholder{color:var(--muted);font-weight:400;font-size:0.75em}
+
+/* Currency row */
+.currency-row{display:grid;grid-template-columns:1fr 40px 1fr;gap:0.5rem;align-items:end;margin-bottom:1.1rem}
+.select-wrap{position:relative}
+.select-wrap::after{
+  content:'▾';position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);
+  color:var(--muted);font-size:0.65em;pointer-events:none;
+}
+.currency-select{
+  width:100%;padding:0.7rem 2rem 0.7rem 0.85rem;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);font-family:var(--dm);
+  font-size:0.85em;font-weight:500;color:var(--text);
+  outline:none;cursor:pointer;transition:border-color 0.15s;appearance:none;
+}
+.currency-select:focus{border-color:rgba(94,207,176,0.4)}
+.currency-select option{background:#1e1e2a}
+
+.swap-btn{
+  width:40px;height:40px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:var(--radius);
+  cursor:pointer;font-size:0.95rem;color:var(--muted2);
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+}
+.swap-btn:hover{background:var(--teal-glow);border-color:var(--teal);color:var(--teal);transform:rotate(180deg)}
+
+/* Convert + Refresh */
+.action-row{display:flex;gap:0.5rem;margin-top:0.2rem}
+.convert-btn{
+  flex:1;padding:0.85rem;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  border:none;border-radius:var(--radius);
+  font-family:var(--syne);font-size:0.85em;font-weight:700;
+  letter-spacing:0.08em;text-transform:uppercase;color:#0a0a0f;
+  cursor:pointer;transition:all 0.18s;
+  box-shadow:0 6px 20px rgba(94,207,176,0.2);
+}
+.convert-btn:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(94,207,176,0.3)}
+.convert-btn:active{transform:translateY(0)}
+.convert-btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;box-shadow:none}
+
+.refresh-btn{
+  width:48px;height:48px;flex-shrink:0;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);cursor:pointer;
+  font-size:1rem;color:var(--muted2);
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.18s;
+}
+.refresh-btn:hover{background:var(--teal-glow);border-color:var(--teal);color:var(--teal)}
+.refresh-btn.spinning svg{animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Status bar */
+.status-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:0.8rem;padding:0.6rem 0.75rem;
+  background:var(--surface2);border-radius:10px;
+  font-size:0.7em;font-family:var(--dm);
+}
+.status-left{color:var(--muted2);display:flex;align-items:center;gap:0.4rem}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.status-dot.ok{background:var(--teal)}
+.status-dot.err{background:var(--rose)}
+.status-dot.loading{background:var(--gold);animation:pulse 1s ease infinite}
+.status-right{color:var(--muted);font-size:0.95em}
+
+/* Result */
+.result{
+  display:none;margin-top:1rem;
+  background:var(--green-bg);border:1px solid var(--green-border);
+  border-radius:var(--radius);padding:1.1rem 1.3rem;
+  animation:popIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.result.show{display:block}
+@keyframes popIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+.result-label{font-size:0.65em;font-family:var(--syne);text-transform:uppercase;letter-spacing:0.1em;color:var(--teal);margin-bottom:0.4rem}
+.result-amount{
+  font-family:var(--syne);font-size:1.9em;font-weight:800;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1.1;margin-bottom:0.35rem;
+}
+.result-rate{font-size:0.75em;color:var(--muted2)}
+.result-rate strong{color:var(--teal);font-weight:500}
+
+/* Error */
+.error-box{
+  display:none;margin-top:1rem;
+  background:var(--rose-bg);border:1px solid var(--rose-border);
+  border-radius:var(--radius);padding:0.9rem 1.1rem;
+  font-size:0.82em;color:var(--rose);font-family:var(--dm);line-height:1.5;
+}
+.error-box.show{display:block}
+.error-suggestion{margin-top:0.4rem;font-size:0.92em;color:var(--muted2)}
+
+/* Footer */
+.footer{margin-top:1.2rem;text-align:center;font-size:0.68em;color:var(--muted);font-family:var(--dm)}
+
+/* ── MOBILE ── */
+@media(max-width:400px){
+  .card-body{padding:1.1rem}
+  .card-header{padding:1.1rem}
+  .result-amount{font-size:1.6em}
+  .api-tab{font-size:0.7em;padding:0.5rem 0.3rem}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="fs-label" id="fsLabel">Aa</span>
+    <div class="fs-controls">
+      <button class="fs-btn active" data-fs="fs-sm" onclick="setFs('fs-sm',this)">A</button>
+      <button class="fs-btn" data-fs="fs-md" onclick="setFs('fs-md',this)">A+</button>
+      <button class="fs-btn" data-fs="fs-lg" onclick="setFs('fs-lg',this)">A++</button>
+    </div>
+  </div>
+</div>
+
+<div class="lang-scroll"><div class="lang-bar" id="langBar"></div></div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="brand">
+      <div class="brand-icon">💱</div>
+      <div class="brand-text">
+        <h1 id="appTitle">Currency Converter</h1>
+        <span id="appSub">Real-time · No API key needed</span>
+      </div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div><span id="liveBadge">LIVE</span></div>
+  </div>
+
+  <div class="card-body">
+
+    <!-- API Selector -->
+    <div class="api-section">
+      <span class="section-label" id="labelApiSource">Data Source</span>
+      <div class="api-tabs">
+        <button class="api-tab active" data-api="frankfurter" onclick="switchApi('frankfurter',this)">Frankfurter</button>
+        <button class="api-tab" data-api="exchangerate" onclick="switchApi('exchangerate',this)">ExchangeRate</button>
+        <button class="api-tab" data-api="fawaz" onclick="switchApi('fawaz',this)">Fawaz API</button>
+      </div>
+    </div>
+
+    <!-- Amount -->
+    <div class="field">
+      <span class="section-label" id="labelAmount">Amount</span>
+      <div class="input-row">
+        <input class="amount-input" type="text" inputmode="decimal" id="amount" value="100" placeholder="0">
+      </div>
+    </div>
+
+    <!-- From / Swap / To -->
+    <div class="currency-row">
+      <div>
+        <span class="section-label" id="labelFrom">From</span>
+        <div class="select-wrap"><select class="currency-select" id="from" onchange="onFromChange()"></select></div>
+      </div>
+      <button class="swap-btn" onclick="swapCurrencies()" title="Swap">⇄</button>
+      <div>
+        <span class="section-label" id="labelTo">To</span>
+        <div class="select-wrap"><select class="currency-select" id="to"></select></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-row">
+      <button class="convert-btn" id="convertBtn" onclick="convert()">
+        <span id="btnText">CONVERT</span>
+      </button>
+      <button class="refresh-btn" id="refreshBtn" onclick="refreshRates()" title="Refresh">
+        <svg id="refreshIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div class="status-bar">
+      <div class="status-left">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">—</span>
+      </div>
+      <span class="status-right" id="statusTime"></span>
+    </div>
+
+    <!-- Result -->
+    <div class="result" id="result">
+      <div class="result-label" id="resultLabel">Result</div>
+      <div class="result-amount" id="resultAmount">—</div>
+      <div class="result-rate" id="resultRate"></div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" id="errorBox">
+      <div id="errorMsg"></div>
+      <div class="error-suggestion" id="errorSuggestion"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer" id="footerText">No API key · Open source APIs · Rates are indicative</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// TRANSLATIONS  (26 languages)
+// ═══════════════════════════════════════════════════════
+const LANGS = {
+  en:{name:'EN',dir:'ltr',appTitle:'Currency Converter',appSub:'Real-time · No API key',liveBadge:'LIVE',labelApiSource:'Data Source',labelAmount:'Amount',labelFrom:'From',labelTo:'To',btnText:'CONVERT',resultLabel:'Result',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'No API key · Open source APIs · Rates are indicative',statusFetching:'Fetching rates…',statusOk:(src,n)=>`${src} · ${n} currencies`,statusErr:'Failed to fetch',lastUpdate:'Updated',errGeneric:'Could not fetch rates.',errSuggestion:(cur)=>`This API may not support ${cur} or is temporarily unavailable. Try switching to another data source — <strong>Frankfurter</strong> is usually the most reliable.`,fsLabel:'Font Size'},
+  tr:{name:'TR',dir:'ltr',appTitle:'Döviz Çevirici',appSub:'Anlık · API anahtarı yok',liveBadge:'CANLI',labelApiSource:'Veri Kaynağı',labelAmount:'Miktar',labelFrom:'Kaynak',labelTo:'Hedef',btnText:'ÇEVİR',resultLabel:'Sonuç',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'API anahtarı yok · Açık kaynak · Kurlar tahminidir',statusFetching:'Kurlar alınıyor…',statusOk:(src,n)=>`${src} · ${n} para birimi`,statusErr:'Bağlantı başarısız',lastUpdate:'Güncellendi',errGeneric:'Kurlar alınamadı.',errSuggestion:(cur)=>`Bu API ${cur} birimini desteklemiyor olabilir veya geçici olarak erişilemiyor. Farklı bir veri kaynağı deneyin — genellikle en kararlı seçenek <strong>Frankfurter</strong>'dır.`,fsLabel:'Yazı Boyutu'},
+  de:{name:'DE',dir:'ltr',appTitle:'Währungsrechner',appSub:'Echtzeit · Kein API-Schlüssel',liveBadge:'LIVE',labelApiSource:'Datenquelle',labelAmount:'Betrag',labelFrom:'Von',labelTo:'Nach',btnText:'UMRECHNEN',resultLabel:'Ergebnis',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Kein API-Schlüssel · Open-Source-APIs · Kurse sind indikativ',statusFetching:'Kurse werden abgerufen…',statusOk:(src,n)=>`${src} · ${n} Währungen`,statusErr:'Abruf fehlgeschlagen',lastUpdate:'Aktualisiert',errGeneric:'Kurse konnten nicht abgerufen werden.',errSuggestion:(cur)=>`Diese API unterstützt möglicherweise ${cur} nicht. Versuchen Sie eine andere Quelle — <strong>Frankfurter</strong> ist meistens am zuverlässigsten.`,fsLabel:'Schriftgröße'},
+  fr:{name:'FR',dir:'ltr',appTitle:'Convertisseur',appSub:'Temps réel · Sans clé API',liveBadge:'EN DIRECT',labelApiSource:'Source de données',labelAmount:'Montant',labelFrom:'De',labelTo:'Vers',btnText:'CONVERTIR',resultLabel:'Résultat',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Sans clé API · APIs open source · Taux indicatifs',statusFetching:'Récupération des taux…',statusOk:(src,n)=>`${src} · ${n} devises`,statusErr:'Échec de la connexion',lastUpdate:'Mis à jour',errGeneric:'Impossible de récupérer les taux.',errSuggestion:(cur)=>`Cette API ne prend peut-être pas en charge ${cur}. Essayez une autre source — <strong>Frankfurter</strong> est généralement la plus fiable.`,fsLabel:'Taille de police'},
+  es:{name:'ES',dir:'ltr',appTitle:'Conversor de Divisas',appSub:'Tiempo real · Sin clave API',liveBadge:'EN VIVO',labelApiSource:'Fuente de datos',labelAmount:'Cantidad',labelFrom:'De',labelTo:'A',btnText:'CONVERTIR',resultLabel:'Resultado',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Sin clave API · APIs abiertas · Tipos indicativos',statusFetching:'Obteniendo tipos…',statusOk:(src,n)=>`${src} · ${n} divisas`,statusErr:'Error de conexión',lastUpdate:'Actualizado',errGeneric:'No se pudieron obtener los tipos.',errSuggestion:(cur)=>`Esta API puede no admitir ${cur}. Pruebe otra fuente — <strong>Frankfurter</strong> suele ser la más fiable.`,fsLabel:'Tamaño de fuente'},
+  pt:{name:'PT',dir:'ltr',appTitle:'Conversor de Moeda',appSub:'Tempo real · Sem chave API',liveBadge:'AO VIVO',labelApiSource:'Fonte de dados',labelAmount:'Valor',labelFrom:'De',labelTo:'Para',btnText:'CONVERTER',resultLabel:'Resultado',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Sem chave API · APIs abertas · Taxas indicativas',statusFetching:'Buscando taxas…',statusOk:(src,n)=>`${src} · ${n} moedas`,statusErr:'Falha na conexão',lastUpdate:'Atualizado',errGeneric:'Não foi possível obter as taxas.',errSuggestion:(cur)=>`Esta API pode não suportar ${cur}. Tente outra fonte — <strong>Frankfurter</strong> costuma ser a mais confiável.`,fsLabel:'Tamanho da fonte'},
+  ru:{name:'RU',dir:'ltr',appTitle:'Конвертер валют',appSub:'В реальном времени · Без ключа',liveBadge:'LIVE',labelApiSource:'Источник данных',labelAmount:'Сумма',labelFrom:'Из',labelTo:'В',btnText:'КОНВЕРТИРОВАТЬ',resultLabel:'Результат',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Без ключа API · Открытые API · Курсы ориентировочны',statusFetching:'Загрузка курсов…',statusOk:(src,n)=>`${src} · ${n} валют`,statusErr:'Ошибка подключения',lastUpdate:'Обновлено',errGeneric:'Не удалось получить курсы.',errSuggestion:(cur)=>`Этот API может не поддерживать ${cur}. Попробуйте другой источник — <strong>Frankfurter</strong> обычно самый надёжный.`,fsLabel:'Размер шрифта'},
+  zh:{name:'ZH',dir:'ltr',appTitle:'货币换算器',appSub:'实时 · 无需API密钥',liveBadge:'实时',labelApiSource:'数据来源',labelAmount:'金额',labelFrom:'从',labelTo:'到',btnText:'换算',resultLabel:'结果',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'无需API密钥 · 开源API · 汇率仅供参考',statusFetching:'正在获取汇率…',statusOk:(src,n)=>`${src} · ${n}种货币`,statusErr:'连接失败',lastUpdate:'更新于',errGeneric:'无法获取汇率。',errSuggestion:(cur)=>`此API可能不支持${cur}。请尝试其他数据源——<strong>Frankfurter</strong>通常最为稳定。`,fsLabel:'字体大小'},
+  ja:{name:'JA',dir:'ltr',appTitle:'通貨コンバーター',appSub:'リアルタイム · APIキー不要',liveBadge:'ライブ',labelApiSource:'データソース',labelAmount:'金額',labelFrom:'変換元',labelTo:'変換先',btnText:'変換する',resultLabel:'結果',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'APIキー不要 · オープンソースAPI · レートは参考値',statusFetching:'レートを取得中…',statusOk:(src,n)=>`${src} · ${n}通貨`,statusErr:'接続に失敗',lastUpdate:'更新',errGeneric:'レートを取得できませんでした。',errSuggestion:(cur)=>`このAPIは${cur}をサポートしていない可能性があります。別のソースをお試しください。<strong>Frankfurter</strong>が通常最も安定しています。`,fsLabel:'フォントサイズ'},
+  ko:{name:'KO',dir:'ltr',appTitle:'환율 계산기',appSub:'실시간 · API 키 불필요',liveBadge:'실시간',labelApiSource:'데이터 소스',labelAmount:'금액',labelFrom:'기준 통화',labelTo:'환산 통화',btnText:'환산하기',resultLabel:'결과',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'API 키 불필요 · 오픈소스 API · 환율은 참고용',statusFetching:'환율 조회 중…',statusOk:(src,n)=>`${src} · ${n}개 통화`,statusErr:'연결 실패',lastUpdate:'업데이트됨',errGeneric:'환율을 가져오지 못했습니다.',errSuggestion:(cur)=>`이 API는 ${cur}을(를) 지원하지 않을 수 있습니다. 다른 소스를 사용해보세요. <strong>Frankfurter</strong>가 가장 안정적입니다.`,fsLabel:'글꼴 크기'},
+  ar:{name:'AR',dir:'rtl',appTitle:'محول العملات',appSub:'فوري · بدون مفتاح API',liveBadge:'مباشر',labelApiSource:'مصدر البيانات',labelAmount:'المبلغ',labelFrom:'من',labelTo:'إلى',btnText:'تحويل',resultLabel:'النتيجة',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'بدون مفتاح API · واجهات مفتوحة · الأسعار استرشادية',statusFetching:'جارٍ جلب الأسعار…',statusOk:(src,n)=>`${src} · ${n} عملة`,statusErr:'فشل الاتصال',lastUpdate:'تم التحديث',errGeneric:'تعذّر الحصول على الأسعار.',errSuggestion:(cur)=>`قد لا تدعم هذه الواجهة ${cur}. جرّب مصدرًا آخر — <strong>Frankfurter</strong> هو الأكثر موثوقية عادةً.`,fsLabel:'حجم الخط'},
+  hi:{name:'HI',dir:'ltr',appTitle:'मुद्रा परिवर्तक',appSub:'रियल-टाइम · API कुंजी नहीं',liveBadge:'लाइव',labelApiSource:'डेटा स्रोत',labelAmount:'राशि',labelFrom:'से',labelTo:'तक',btnText:'बदलें',resultLabel:'परिणाम',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'API कुंजी नहीं · खुले स्रोत API · दरें सांकेतिक',statusFetching:'दरें प्राप्त हो रही हैं…',statusOk:(src,n)=>`${src} · ${n} मुद्राएं`,statusErr:'कनेक्शन विफल',lastUpdate:'अपडेट किया',errGeneric:'दरें प्राप्त नहीं हो सकीं।',errSuggestion:(cur)=>`यह API ${cur} का समर्थन नहीं कर सकता। दूसरा स्रोत आज़माएं — <strong>Frankfurter</strong> सबसे विश्वसनीय है।`,fsLabel:'फ़ॉन्ट आकार'},
+  id:{name:'ID',dir:'ltr',appTitle:'Konverter Mata Uang',appSub:'Real-time · Tanpa kunci API',liveBadge:'LANGSUNG',labelApiSource:'Sumber Data',labelAmount:'Jumlah',labelFrom:'Dari',labelTo:'Ke',btnText:'KONVERSI',resultLabel:'Hasil',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Tanpa kunci API · API terbuka · Kurs bersifat indikatif',statusFetching:'Mengambil kurs…',statusOk:(src,n)=>`${src} · ${n} mata uang`,statusErr:'Koneksi gagal',lastUpdate:'Diperbarui',errGeneric:'Kurs tidak dapat diambil.',errSuggestion:(cur)=>`API ini mungkin tidak mendukung ${cur}. Coba sumber lain — <strong>Frankfurter</strong> biasanya paling andal.`,fsLabel:'Ukuran Font'},
+  it:{name:'IT',dir:'ltr',appTitle:'Convertitore Valute',appSub:'Tempo reale · Nessuna chiave API',liveBadge:'LIVE',labelApiSource:'Fonte dati',labelAmount:'Importo',labelFrom:'Da',labelTo:'A',btnText:'CONVERTI',resultLabel:'Risultato',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Nessuna chiave API · API aperte · Tassi indicativi',statusFetching:'Recupero tassi…',statusOk:(src,n)=>`${src} · ${n} valute`,statusErr:'Connessione fallita',lastUpdate:'Aggiornato',errGeneric:'Impossibile recuperare i tassi.',errSuggestion:(cur)=>`Questa API potrebbe non supportare ${cur}. Prova un\'altra fonte — <strong>Frankfurter</strong> è solitamente la più affidabile.`,fsLabel:'Dimensione font'},
+  nl:{name:'NL',dir:'ltr',appTitle:'Valutaomrekener',appSub:'Realtime · Geen API-sleutel',liveBadge:'LIVE',labelApiSource:'Gegevensbron',labelAmount:'Bedrag',labelFrom:'Van',labelTo:'Naar',btnText:'OMREKENEN',resultLabel:'Resultaat',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Geen API-sleutel · Open API\'s · Koersen zijn indicatief',statusFetching:'Koersen ophalen…',statusOk:(src,n)=>`${src} · ${n} valuta's`,statusErr:'Verbinding mislukt',lastUpdate:'Bijgewerkt',errGeneric:'Koersen konden niet worden opgehaald.',errSuggestion:(cur)=>`Deze API ondersteunt ${cur} mogelijk niet. Probeer een andere bron — <strong>Frankfurter</strong> is doorgaans het meest betrouwbaar.`,fsLabel:'Lettergrootte'},
+  pl:{name:'PL',dir:'ltr',appTitle:'Przelicznik Walut',appSub:'Czas rzeczywisty · Bez klucza API',liveBadge:'NA ŻYWO',labelApiSource:'Źródło danych',labelAmount:'Kwota',labelFrom:'Z',labelTo:'Na',btnText:'PRZELICZ',resultLabel:'Wynik',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Bez klucza API · Otwarte API · Kursy orientacyjne',statusFetching:'Pobieranie kursów…',statusOk:(src,n)=>`${src} · ${n} walut`,statusErr:'Błąd połączenia',lastUpdate:'Zaktualizowano',errGeneric:'Nie udało się pobrać kursów.',errSuggestion:(cur)=>`To API może nie obsługiwać ${cur}. Wypróbuj inne źródło — <strong>Frankfurter</strong> jest zazwyczaj najbardziej niezawodny.`,fsLabel:'Rozmiar czcionki'},
+  uk:{name:'UK',dir:'ltr',appTitle:'Конвертер валют',appSub:'В реальному часі · Без ключа',liveBadge:'LIVE',labelApiSource:'Джерело даних',labelAmount:'Сума',labelFrom:'З',labelTo:'В',btnText:'КОНВЕРТУВАТИ',resultLabel:'Результат',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Без ключа API · Відкриті API · Курси орієнтовні',statusFetching:'Завантаження курсів…',statusOk:(src,n)=>`${src} · ${n} валют`,statusErr:'Помилка з\'єднання',lastUpdate:'Оновлено',errGeneric:'Не вдалося отримати курси.',errSuggestion:(cur)=>`Цей API може не підтримувати ${cur}. Спробуйте інше джерело — <strong>Frankfurter</strong> зазвичай найнадійніший.`,fsLabel:'Розмір шрифту'},
+  sv:{name:'SV',dir:'ltr',appTitle:'Valutaomvandlare',appSub:'Realtid · Ingen API-nyckel',liveBadge:'LIVE',labelApiSource:'Datakälla',labelAmount:'Belopp',labelFrom:'Från',labelTo:'Till',btnText:'OMVANDLA',resultLabel:'Resultat',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Ingen API-nyckel · Öppna API:er · Kurser är vägledande',statusFetching:'Hämtar kurser…',statusOk:(src,n)=>`${src} · ${n} valutor`,statusErr:'Anslutning misslyckades',lastUpdate:'Uppdaterad',errGeneric:'Det gick inte att hämta kurser.',errSuggestion:(cur)=>`Detta API kanske inte stöder ${cur}. Försök med en annan källa — <strong>Frankfurter</strong> är vanligtvis mest tillförlitlig.`,fsLabel:'Teckenstorlek'},
+  th:{name:'TH',dir:'ltr',appTitle:'แปลงสกุลเงิน',appSub:'เรียลไทม์ · ไม่ต้องใช้ API Key',liveBadge:'สด',labelApiSource:'แหล่งข้อมูล',labelAmount:'จำนวน',labelFrom:'จาก',labelTo:'เป็น',btnText:'แปลง',resultLabel:'ผลลัพธ์',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'ไม่ต้องใช้ API Key · API โอเพนซอร์ส · อัตราเป็นข้อมูลอ้างอิง',statusFetching:'กำลังดึงอัตราแลกเปลี่ยน…',statusOk:(src,n)=>`${src} · ${n} สกุลเงิน`,statusErr:'การเชื่อมต่อล้มเหลว',lastUpdate:'อัปเดตแล้ว',errGeneric:'ไม่สามารถดึงอัตราแลกเปลี่ยนได้',errSuggestion:(cur)=>`API นี้อาจไม่รองรับ ${cur} ลองเปลี่ยนแหล่งข้อมูล — <strong>Frankfurter</strong> มักเสถียรที่สุด`,fsLabel:'ขนาดตัวอักษร'},
+  vi:{name:'VI',dir:'ltr',appTitle:'Chuyển Đổi Tiền Tệ',appSub:'Thời gian thực · Không cần API key',liveBadge:'TRỰC TIẾP',labelApiSource:'Nguồn dữ liệu',labelAmount:'Số tiền',labelFrom:'Từ',labelTo:'Sang',btnText:'CHUYỂN ĐỔI',resultLabel:'Kết quả',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Không cần API key · API mã nguồn mở · Tỷ giá tham khảo',statusFetching:'Đang lấy tỷ giá…',statusOk:(src,n)=>`${src} · ${n} loại tiền`,statusErr:'Kết nối thất bại',lastUpdate:'Đã cập nhật',errGeneric:'Không thể lấy tỷ giá.',errSuggestion:(cur)=>`API này có thể không hỗ trợ ${cur}. Hãy thử nguồn khác — <strong>Frankfurter</strong> thường đáng tin cậy nhất.`,fsLabel:'Cỡ chữ'},
+  el:{name:'EL',dir:'ltr',appTitle:'Μετατροπέας Νομισμάτων',appSub:'Σε πραγματικό χρόνο · Χωρίς κλειδί API',liveBadge:'ΖΩΝΤΑΝΑ',labelApiSource:'Πηγή δεδομένων',labelAmount:'Ποσό',labelFrom:'Από',labelTo:'Προς',btnText:'ΜΕΤΑΤΡΟΠΗ',resultLabel:'Αποτέλεσμα',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Χωρίς κλειδί API · Ανοιχτά API · Ισοτιμίες ενδεικτικές',statusFetching:'Λήψη ισοτιμιών…',statusOk:(src,n)=>`${src} · ${n} νομίσματα`,statusErr:'Αποτυχία σύνδεσης',lastUpdate:'Ενημερώθηκε',errGeneric:'Δεν ήταν δυνατή η λήψη ισοτιμιών.',errSuggestion:(cur)=>`Αυτό το API ενδέχεται να μην υποστηρίζει ${cur}. Δοκιμάστε άλλη πηγή — το <strong>Frankfurter</strong> είναι συνήθως το πιο αξιόπιστο.`,fsLabel:'Μέγεθος γραμματοσειράς'},
+  bn:{name:'BN',dir:'ltr',appTitle:'মুদ্রা রূপান্তরকারী',appSub:'রিয়েল-টাইম · API কী প্রয়োজন নেই',liveBadge:'লাইভ',labelApiSource:'ডেটা উৎস',labelAmount:'পরিমাণ',labelFrom:'থেকে',labelTo:'তে',btnText:'রূপান্তর করুন',resultLabel:'ফলাফল',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'API কী নেই · ওপেন সোর্স API · হার আনুমানিক',statusFetching:'হার আনা হচ্ছে…',statusOk:(src,n)=>`${src} · ${n}টি মুদ্রা`,statusErr:'সংযোগ ব্যর্থ',lastUpdate:'আপডেট হয়েছে',errGeneric:'হার আনা সম্ভব হয়নি।',errSuggestion:(cur)=>`এই API ${cur} সমর্থন নাও করতে পারে। অন্য উৎস ব্যবহার করুন — <strong>Frankfurter</strong> সাধারণত সবচেয়ে নির্ভরযোগ্য।`,fsLabel:'ফন্ট আকার'},
+  fa:{name:'FA',dir:'rtl',appTitle:'تبدیل ارز',appSub:'آنی · بدون کلید API',liveBadge:'زنده',labelApiSource:'منبع داده',labelAmount:'مقدار',labelFrom:'از',labelTo:'به',btnText:'تبدیل',resultLabel:'نتیجه',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'بدون کلید API · APIهای آزاد · نرخ‌ها تقریبی هستند',statusFetching:'در حال دریافت نرخ‌ها…',statusOk:(src,n)=>`${src} · ${n} ارز`,statusErr:'اتصال ناموفق',lastUpdate:'به‌روزرسانی شد',errGeneric:'دریافت نرخ‌ها ممکن نشد.',errSuggestion:(cur)=>`این API ممکن است ${cur} را پشتیبانی نکند. منبع دیگری را امتحان کنید — <strong>Frankfurter</strong> معمولاً قابل‌اطمینان‌ترین است.`,fsLabel:'اندازه قلم'},
+  cs:{name:'CS',dir:'ltr',appTitle:'Převodník měn',appSub:'Reálný čas · Bez API klíče',liveBadge:'LIVE',labelApiSource:'Zdroj dat',labelAmount:'Částka',labelFrom:'Z',labelTo:'Na',btnText:'PŘEVÉST',resultLabel:'Výsledek',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Bez API klíče · Otevřená API · Kurzy jsou orientační',statusFetching:'Načítám kurzy…',statusOk:(src,n)=>`${src} · ${n} měn`,statusErr:'Připojení selhalo',lastUpdate:'Aktualizováno',errGeneric:'Kurzy se nepodařilo načíst.',errSuggestion:(cur)=>`Toto API nemusí podporovat ${cur}. Zkuste jiný zdroj — <strong>Frankfurter</strong> je obvykle nejspolehlivější.`,fsLabel:'Velikost písma'},
+  ro:{name:'RO',dir:'ltr',appTitle:'Convertor Valutar',appSub:'Timp real · Fără cheie API',liveBadge:'LIVE',labelApiSource:'Sursă de date',labelAmount:'Sumă',labelFrom:'Din',labelTo:'În',btnText:'CONVERTEȘTE',resultLabel:'Rezultat',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Fără cheie API · API-uri deschise · Cursuri orientative',statusFetching:'Se preiau cursurile…',statusOk:(src,n)=>`${src} · ${n} valute`,statusErr:'Conexiune eșuată',lastUpdate:'Actualizat',errGeneric:'Cursurile nu au putut fi preluate.',errSuggestion:(cur)=>`Acest API s-ar putea să nu suporte ${cur}. Încearcă altă sursă — <strong>Frankfurter</strong> este de obicei cel mai fiabil.`,fsLabel:'Dimensiunea fontului'},
+  da:{name:'DA',dir:'ltr',appTitle:'Valutaomregner',appSub:'Realtid · Ingen API-nøgle',liveBadge:'LIVE',labelApiSource:'Datakilde',labelAmount:'Beløb',labelFrom:'Fra',labelTo:'Til',btnText:'OMREGN',resultLabel:'Resultat',resultRate:(a,f,r,t)=>`${a} ${f} = <strong>${r} ${t}</strong>`,footer:'Ingen API-nøgle · Åbne API\'er · Kurser er vejledende',statusFetching:'Henter kurser…',statusOk:(src,n)=>`${src} · ${n} valutaer`,statusErr:'Forbindelse mislykkedes',lastUpdate:'Opdateret',errGeneric:'Kurser kunne ikke hentes.',errSuggestion:(cur)=>`Denne API understøtter muligvis ikke ${cur}. Prøv en anden kilde — <strong>Frankfurter</strong> er normalt mest pålidelig.`,fsLabel:'Skriftstørrelse'},
+};
+
+// ═══════════════════════════════════════════════════════
+// CURRENCIES
+// ═══════════════════════════════════════════════════════
+const CURRENCIES=[
+  {code:'AED',name:'UAE Dirham'},{code:'AFN',name:'Afghan Afghani'},{code:'ALL',name:'Albanian Lek'},
+  {code:'AMD',name:'Armenian Dram'},{code:'ANG',name:'NL Antillean Guilder'},{code:'AOA',name:'Angolan Kwanza'},
+  {code:'ARS',name:'Argentine Peso'},{code:'AUD',name:'Australian Dollar'},{code:'AWG',name:'Aruban Florin'},
+  {code:'AZN',name:'Azerbaijani Manat'},{code:'BAM',name:'Bosnia Mark'},{code:'BBD',name:'Barbados Dollar'},
+  {code:'BDT',name:'Bangladeshi Taka'},{code:'BGN',name:'Bulgarian Lev'},{code:'BHD',name:'Bahraini Dinar'},
+  {code:'BIF',name:'Burundian Franc'},{code:'BMD',name:'Bermudian Dollar'},{code:'BND',name:'Brunei Dollar'},
+  {code:'BOB',name:'Bolivian Boliviano'},{code:'BRL',name:'Brazilian Real'},{code:'BSD',name:'Bahamian Dollar'},
+  {code:'BTN',name:'Bhutanese Ngultrum'},{code:'BWP',name:'Botswanan Pula'},{code:'BYN',name:'Belarusian Ruble'},
+  {code:'BZD',name:'Belize Dollar'},{code:'CAD',name:'Canadian Dollar'},{code:'CDF',name:'Congolese Franc'},
+  {code:'CHF',name:'Swiss Franc'},{code:'CLP',name:'Chilean Peso'},{code:'CNY',name:'Chinese Yuan'},
+  {code:'COP',name:'Colombian Peso'},{code:'CRC',name:'Costa Rican Colón'},{code:'CUP',name:'Cuban Peso'},
+  {code:'CVE',name:'Cape Verdean Escudo'},{code:'CZK',name:'Czech Koruna'},{code:'DJF',name:'Djiboutian Franc'},
+  {code:'DKK',name:'Danish Krone'},{code:'DOP',name:'Dominican Peso'},{code:'DZD',name:'Algerian Dinar'},
+  {code:'EGP',name:'Egyptian Pound'},{code:'ERN',name:'Eritrean Nakfa'},{code:'ETB',name:'Ethiopian Birr'},
+  {code:'EUR',name:'Euro'},{code:'FJD',name:'Fijian Dollar'},{code:'GBP',name:'British Pound'},
+  {code:'GEL',name:'Georgian Lari'},{code:'GHS',name:'Ghanaian Cedi'},{code:'GMD',name:'Gambian Dalasi'},
+  {code:'GTQ',name:'Guatemalan Quetzal'},{code:'HKD',name:'Hong Kong Dollar'},{code:'HNL',name:'Honduran Lempira'},
+  {code:'HRK',name:'Croatian Kuna'},{code:'HTG',name:'Haitian Gourde'},{code:'HUF',name:'Hungarian Forint'},
+  {code:'IDR',name:'Indonesian Rupiah'},{code:'ILS',name:'Israeli Shekel'},{code:'INR',name:'Indian Rupee'},
+  {code:'IQD',name:'Iraqi Dinar'},{code:'IRR',name:'Iranian Rial'},{code:'ISK',name:'Icelandic Króna'},
+  {code:'JMD',name:'Jamaican Dollar'},{code:'JOD',name:'Jordanian Dinar'},{code:'JPY',name:'Japanese Yen'},
+  {code:'KES',name:'Kenyan Shilling'},{code:'KGS',name:'Kyrgyzstani Som'},{code:'KHR',name:'Cambodian Riel'},
+  {code:'KPW',name:'North Korean Won'},{code:'KRW',name:'South Korean Won'},{code:'KWD',name:'Kuwaiti Dinar'},
+  {code:'KZT',name:'Kazakhstani Tenge'},{code:'LAK',name:'Laotian Kip'},{code:'LBP',name:'Lebanese Pound'},
+  {code:'LKR',name:'Sri Lankan Rupee'},{code:'LYD',name:'Libyan Dinar'},{code:'MAD',name:'Moroccan Dirham'},
+  {code:'MDL',name:'Moldovan Leu'},{code:'MKD',name:'Macedonian Denar'},{code:'MMK',name:'Myanmar Kyat'},
+  {code:'MNT',name:'Mongolian Tögrög'},{code:'MUR',name:'Mauritian Rupee'},{code:'MVR',name:'Maldivian Rufiyaa'},
+  {code:'MWK',name:'Malawian Kwacha'},{code:'MXN',name:'Mexican Peso'},{code:'MYR',name:'Malaysian Ringgit'},
+  {code:'MZN',name:'Mozambican Metical'},{code:'NAD',name:'Namibian Dollar'},{code:'NGN',name:'Nigerian Naira'},
+  {code:'NIO',name:'Nicaraguan Córdoba'},{code:'NOK',name:'Norwegian Krone'},{code:'NPR',name:'Nepalese Rupee'},
+  {code:'NZD',name:'New Zealand Dollar'},{code:'OMR',name:'Omani Rial'},{code:'PAB',name:'Panamanian Balboa'},
+  {code:'PEN',name:'Peruvian Sol'},{code:'PGK',name:'Papua New Guinean Kina'},{code:'PHP',name:'Philippine Peso'},
+  {code:'PKR',name:'Pakistani Rupee'},{code:'PLN',name:'Polish Złoty'},{code:'PYG',name:'Paraguayan Guaraní'},
+  {code:'QAR',name:'Qatari Riyal'},{code:'RON',name:'Romanian Leu'},{code:'RSD',name:'Serbian Dinar'},
+  {code:'RUB',name:'Russian Ruble'},{code:'RWF',name:'Rwandan Franc'},{code:'SAR',name:'Saudi Riyal'},
+  {code:'SDG',name:'Sudanese Pound'},{code:'SEK',name:'Swedish Krona'},{code:'SGD',name:'Singapore Dollar'},
+  {code:'SOS',name:'Somali Shilling'},{code:'SYP',name:'Syrian Pound'},{code:'THB',name:'Thai Baht'},
+  {code:'TJS',name:'Tajikistani Somoni'},{code:'TMT',name:'Turkmenistani Manat'},{code:'TND',name:'Tunisian Dinar'},
+  {code:'TRY',name:'Turkish Lira'},{code:'TTD',name:'Trinidad & Tobago Dollar'},{code:'TWD',name:'New Taiwan Dollar'},
+  {code:'TZS',name:'Tanzanian Shilling'},{code:'UAH',name:'Ukrainian Hryvnia'},{code:'UGX',name:'Ugandan Shilling'},
+  {code:'USD',name:'US Dollar'},{code:'UYU',name:'Uruguayan Peso'},{code:'UZS',name:'Uzbekistani Som'},
+  {code:'VES',name:'Venezuelan Bolívar'},{code:'VND',name:'Vietnamese Dong'},{code:'XAF',name:'Central African CFA'},
+  {code:'XOF',name:'West African CFA'},{code:'YER',name:'Yemeni Rial'},{code:'ZAR',name:'South African Rand'},
+  {code:'ZMW',name:'Zambian Kwacha'},{code:'ZWL',name:'Zimbabwean Dollar'},
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let currentLang = 'en';
+let currentApi  = 'frankfurter';
+let ratesCache  = {};   // { from: { rates:{}, timestamp:'' } }
+
+// ═══════════════════════════════════════════════════════
+// FONT SIZE
+// ═══════════════════════════════════════════════════════
+function setFs(cls, btn) {
+  document.body.classList.remove('fs-md','fs-lg');
+  if (cls !== 'fs-sm') document.body.classList.add(cls);
+  document.querySelectorAll('.fs-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════
+// LANG
+// ═══════════════════════════════════════════════════════
+function detectLang() {
+  const code = (navigator.language||'en').split('-')[0].toLowerCase();
+  return LANGS[code] ? code : 'en';
+}
+function applyLang(lang) {
+  currentLang = lang;
+  const t = LANGS[lang];
+  document.documentElement.lang = lang;
+  document.documentElement.dir = t.dir;
+  document.getElementById('appTitle').textContent     = t.appTitle;
+  document.getElementById('appSub').textContent       = t.appSub;
+  document.getElementById('liveBadge').textContent    = t.liveBadge;
+  document.getElementById('labelApiSource').textContent = t.labelApiSource;
+  document.getElementById('labelAmount').textContent  = t.labelAmount;
+  document.getElementById('labelFrom').textContent    = t.labelFrom;
+  document.getElementById('labelTo').textContent      = t.labelTo;
+  document.getElementById('btnText').textContent      = t.btnText;
+  document.getElementById('resultLabel').textContent  = t.resultLabel;
+  document.getElementById('footerText').textContent   = t.footer;
+  document.getElementById('fsLabel').textContent      = t.fsLabel;
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang));
+  // Re-render status if we have cache
+  const from = document.getElementById('from').value;
+  if (ratesCache[from]) updateStatusOk(from);
+}
+function buildLangBar() {
+  const bar = document.getElementById('langBar');
+  Object.entries(LANGS).forEach(([code,t]) => {
+    const btn = document.createElement('button');
+    btn.className = 'lang-btn'; btn.dataset.lang = code; btn.textContent = t.name;
+    btn.onclick = () => applyLang(code);
+    bar.appendChild(btn);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// SELECTS
+// ═══════════════════════════════════════════════════════
+function buildSelects() {
+  ['from','to'].forEach(id => {
+    const sel = document.getElementById(id);
+    CURRENCIES.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code; opt.textContent = `${c.code} — ${c.name}`;
+      sel.appendChild(opt);
+    });
+  });
+  document.getElementById('from').value = 'USD';
+  document.getElementById('to').value   = 'TRY';
+}
+
+// ═══════════════════════════════════════════════════════
+// API FETCH
+// ═══════════════════════════════════════════════════════
+async function fetchRates(from) {
+  setStatus('loading', LANGS[currentLang].statusFetching, '');
+  try {
+    let rates = {};
+    if (currentApi === 'frankfurter') {
+      const r = await fetch(`https://api.frankfurter.app/latest?from=${from}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      rates = d.rates || {};
+      rates[from] = 1;
+    } else if (currentApi === 'exchangerate') {
+      const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${from}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      rates = d.rates || {};
+    } else if (currentApi === 'fawaz') {
+      const fromLower = from.toLowerCase();
+      const r = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${fromLower}.json`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      const raw = d[fromLower] || {};
+      // normalize keys to uppercase
+      Object.keys(raw).forEach(k => { rates[k.toUpperCase()] = raw[k]; });
+      rates[from] = 1;
+    }
+    ratesCache[from] = { rates, timestamp: new Date() };
+    updateStatusOk(from);
+    return rates;
+  } catch(e) {
+    setStatus('err', LANGS[currentLang].statusErr, '');
+    throw e;
+  }
+}
+
+
+function updateStatusOk(from) {
+  const t = LANGS[currentLang];
+  const cache = ratesCache[from];
+  if (!cache) return;
+  const n = Object.keys(cache.rates).length;
+  const apiLabel = {frankfurter:'Frankfurter',exchangerate:'ExchangeRate-API',fawaz:'Fawaz API'}[currentApi];
+  const time = cache.timestamp.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+  setStatus('ok', t.statusOk(apiLabel, n), `${t.lastUpdate} ${time}`);
+}
+
+function setStatus(type, text, time) {
+  const dot  = document.getElementById('statusDot');
+  const txt  = document.getElementById('statusText');
+  const tEl  = document.getElementById('statusTime');
+  dot.className  = 'status-dot ' + (type==='loading'?'loading':type==='ok'?'ok':'err');
+  txt.textContent = text;
+  tEl.textContent = time;
+}
+
+// ═══════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════
+function switchApi(api, btn) {
+  currentApi = api;
+  document.querySelectorAll('.api-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ratesCache = {};
+  clearResult();
+  const from = document.getElementById('from').value;
+  fetchRates(from);
+}
+
+function onFromChange() {
+  ratesCache = {};
+  clearResult();
+  const from = document.getElementById('from').value;
+  fetchRates(from);
+}
+
+async function refreshRates() {
+  const from = document.getElementById('from').value;
+  ratesCache = {};
+  clearResult();
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  try { await fetchRates(from); } finally { btn.classList.remove('spinning'); }
+}
+
+function swapCurrencies() {
+  const f = document.getElementById('from'), t = document.getElementById('to');
+  const tmp = f.value; f.value = t.value; t.value = tmp;
+  onFromChange();
+}
+
+// ═══════════════════════════════════════════════════════
+// CONVERT
+// ═══════════════════════════════════════════════════════
+async function convert() {
+  const raw = document.getElementById('amount').value.replace(/[^0-9.,]/g, '');
+  const normalized = raw.replace(/,/g, '.');
+  const amount = parseFloat(normalized.replace(/\.(?=.*\.)/g, ''));
+  const from   = document.getElementById('from').value;
+  const to     = document.getElementById('to').value;
+  const t      = LANGS[currentLang];
+
+  if (!amount || isNaN(amount) || amount <= 0) {
+    clearResult(); showError(t.errGeneric, ''); return;
+  }
+
+  clearResult();
+  document.getElementById('convertBtn').disabled = true;
+
+  try {
+    let rate;
+
+    // Try cache first
+    if (ratesCache[from] && ratesCache[from].rates[to] !== undefined) {
+      rate = ratesCache[from].rates[to];
+    } else {
+      // Fetch all
+      const rates = await fetchRates(from);
+      rate = rates[to];
+    }
+
+    if (!rate) throw new Error(`Rate for ${to} not available from this source.`);
+
+    const converted = amount * rate;
+    document.getElementById('resultAmount').textContent = fmt(converted) + ' ' + to;
+    document.getElementById('resultRate').innerHTML = t.resultRate(fmt(amount), from, fmt(rate), to);
+    document.getElementById('result').className = 'result show';
+
+  } catch(e) {
+    showError(t.errGeneric, t.errSuggestion(to));
+    setStatus('err', LANGS[currentLang].statusErr, '');
+  } finally {
+    document.getElementById('convertBtn').disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════
+function clearResult() {
+  document.getElementById('result').className  = 'result';
+  document.getElementById('errorBox').className = 'error-box';
+}
+function showError(msg, suggestion) {
+  document.getElementById('errorMsg').textContent        = msg;
+  document.getElementById('errorSuggestion').innerHTML   = suggestion || '';
+  document.getElementById('errorBox').className          = 'error-box show';
+}
+function fmt(n) {
+  const num = Number(n);
+  if (isNaN(num)) return "0";
+  // For very large numbers reduce decimals, for small numbers show more
+  const decimals = num >= 1000 ? 2 : num >= 1 ? 4 : 6;
+  return num.toLocaleString(undefined, {maximumFractionDigits: decimals});
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+buildLangBar();
+buildSelects();
+applyLang(detectLang());
+fetchRates('USD');
+
+document.getElementById('amount').addEventListener('keydown', e => {
+  if (e.key === 'Enter') convert();
+});
+</script>
+</body>
+</html>
